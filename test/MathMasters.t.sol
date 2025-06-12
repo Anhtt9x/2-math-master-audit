@@ -3,12 +3,18 @@ pragma solidity ^0.8.3;
 
 import {Base_Test, console2} from "./Base_Test.t.sol";
 import {MathMasters} from "src/MathMasters.sol";
+import {CompactCodeBase} from "test/CompactCodeBase.sol";
 
 contract MathMastersTest is Base_Test {
     function testMulWad() public {
         assertEq(MathMasters.mulWad(2.5e18, 0.5e18), 1.25e18);
         assertEq(MathMasters.mulWad(3e18, 1e18), 3e18);
         assertEq(MathMasters.mulWad(369, 271), 0);
+    }
+
+    function testMulRevert() public {
+        vm.expectRevert();
+        MathMasters.mulWad(type(uint256).max, type(uint256).max);
     }
 
     function testMulWadFuzz(uint256 x, uint256 y) public pure {
@@ -23,6 +29,13 @@ contract MathMastersTest is Base_Test {
         assertEq(MathMasters.mulWadUp(2.5e18, 0.5e18), 1.25e18);
         assertEq(MathMasters.mulWadUp(3e18, 1e18), 3e18);
         assertEq(MathMasters.mulWadUp(369, 271), 1);
+    }
+
+    function testMulWadUpUnit() public {
+        uint256 x = 3e18;
+        uint256 y = 2.5e18;
+        uint256 result = MathMasters.mulWadUp(x, y);
+        console2.log(result);
     }
 
     function testMulWadUpFuzz(uint256 x, uint256 y) public {
@@ -58,4 +71,21 @@ contract MathMastersTest is Base_Test {
     function testSqrtFuzzSolmate(uint256 x) public pure {
         assert(MathMasters.sqrt(x) == solmateSqrt(x));
     }
+
+    function testSqrtWithCertoraEdgeCase() public pure {
+        uint256 x = 0xffffff00000000000000000000000000000;
+        assert(MathMasters.sqrt(x) == solmateSqrt(x));
+    }
+
+    function testCompactFuzz(uint256 x) public  {
+        CompactCodeBase cc = new CompactCodeBase();
+        assertEq(cc.mathMastersSqrt(x), cc.solmateTopHalf(x));
+    }
+
+    function testCompactFuzz() public  {
+        uint256 x = 0xffffff00000000000000000000000000000;
+        CompactCodeBase cc = new CompactCodeBase();
+        assertEq(cc.mathMastersSqrt(x), cc.solmateTopHalf(x));
+    }
 }
+
